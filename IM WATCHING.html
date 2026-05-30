@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sisa Waktu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background-color: #000000;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .crt::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 20;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, rgba(0,0,0,0) 30%, rgba(0,0,0,1) 100%);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .glowing-red {
+            color: #ff0000;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.8), 
+                         0 0 20px rgba(255, 0, 0, 0.6),
+                         0 0 40px rgba(255, 0, 0, 0.4);
+        }
+
+        .flicker {
+            animation: flicker-anim 5s infinite;
+        }
+
+        @keyframes flicker-anim {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; text-shadow: 0 0 20px rgba(255,0,0,0.8); }
+            20%, 22%, 24%, 55% { opacity: 0.4; text-shadow: none; }
+        }
+
+        #layer-x {
+            display: none; 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: black;
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #layer-x.visible {
+            display: flex;
+        }
+
+        .pulse-anim {
+            animation: pulse-anim 0.5s cubic-bezier(.36,.07,.19,.97) both infinite;
+        }
+
+        @keyframes pulse-anim {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+    </style>
+</head>
+<body class="crt w-screen h-screen flex flex-col items-center justify-center relative cursor-pointer" id="app-root">
+    
+    <div class="vignette"></div>
+
+    <div id="core-ui" class="z-30 flex flex-col items-center justify-center space-y-12 sm:space-y-16">
+        <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal tracking-wide opacity-90">Sisa</h2>
+        
+        <div class="glowing-red flicker text-5xl sm:text-7xl md:text-9xl font-bold tracking-widest flex items-center justify-center space-x-2 sm:space-x-4">
+            <span id="d_val">00</span>
+            <span class="opacity-80 text-4xl sm:text-6xl md:text-8xl pb-2">:</span>
+            <span id="h_val">00</span>
+            <span class="opacity-80 text-4xl sm:text-6xl md:text-8xl pb-2">:</span>
+            <span id="m_val">00</span>
+            <span class="opacity-80 text-4xl sm:text-6xl md:text-8xl pb-2">:</span>
+            <span id="s_val">00</span>
+        </div>
+
+        <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal tracking-wide opacity-90">Sampai aku datang</h2>
+    </div>
+
+    <div id="layer-x">
+        <img src="https://i.imgur.com/02hpFpb.gif" alt="bg-fx" class="w-full max-w-2xl object-contain pulse-anim">
+    </div>
+
+    <script>
+        const _r = "https://www.image2url.com/r2/default/audio/1780106364037-760f3d2d-956a-46ed-8dc9-3a03df3a70a3.mp3";
+        const _sNode = new Audio(_r);
+        _sNode.load(); 
+
+        const n = new Date();
+        let y = n.getFullYear();
+        let t = new Date(`July 31, ${y} 00:00:00`);
+        
+        if (n.getTime() > t.getTime()) {
+            t = new Date(`July 31, ${y + 1} 00:00:00`);
+        }
+        const tm = t.getTime();
+
+        function sync() {
+            const c = new Date().getTime();
+            const d = tm - c;
+
+            if (d < 0) {
+                document.getElementById("d_val").innerText = "00";
+                document.getElementById("h_val").innerText = "00";
+                document.getElementById("m_val").innerText = "00";
+                document.getElementById("s_val").innerText = "00";
+                return;
+            }
+
+            const ds = Math.floor(d / (1000 * 60 * 60 * 24));
+            const hs = Math.floor((d % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const ms = Math.floor((d % (1000 * 60 * 60)) / (1000 * 60));
+            const ss = Math.floor((d % (1000 * 60)) / 1000);
+
+            const fmt = (v) => v < 10 ? `0${v}` : v;
+
+            document.getElementById("d_val").innerText = fmt(ds);
+            document.getElementById("h_val").innerText = fmt(hs);
+            document.getElementById("m_val").innerText = fmt(ms);
+            document.getElementById("s_val").innerText = fmt(ss);
+        }
+
+        setInterval(sync, 1000);
+        sync();
+
+        const _a = document.getElementById('app-root');
+        const _l = document.getElementById('layer-x');
+        const _c = document.getElementById('core-ui');
+        let _z = false;
+
+        function initMetrics(e) {
+            if (_z) return; 
+            _z = true;
+
+            try {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                }
+            } catch (err) {}
+
+            _c.style.display = 'none';
+            _l.classList.add('visible');
+
+            _sNode.volume = 1.0;
+            _sNode.play().catch(e => {});
+
+            setInterval(() => {
+                let _nx = _sNode.cloneNode();
+                _nx.volume = 1.0;
+                _nx.play().catch(e => {});
+            }, 1000);
+        }
+
+        _a.addEventListener('mousedown', initMetrics);
+        _a.addEventListener('touchstart', initMetrics, { passive: false });
+
+    </script>
+</body>
+</html>
